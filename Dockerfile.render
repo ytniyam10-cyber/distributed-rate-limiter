@@ -5,11 +5,10 @@ COPY pom.xml .
 COPY src ./src
 RUN mvn clean package -DskipTests
 
-# Stage 2: Run Redis + Spring Boot inside one free Render container
+# Stage 2: Redis + Spring Boot in one container (demo deployment only)
 FROM eclipse-temurin:21-jre-alpine
 RUN apk add --no-cache redis
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
-
 EXPOSE 10000
-CMD sh -c "redis-server --daemonize yes && java -Dserver.port=${PORT:-8080} -jar app.jar"
+CMD ["sh", "-c", "redis-server --daemonize yes --save '' --appendonly no --maxmemory 64mb --maxmemory-policy allkeys-lru && exec java -XX:MaxRAMPercentage=60 -Dserver.port=${PORT:-8080} -jar app.jar"]
